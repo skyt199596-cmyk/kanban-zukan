@@ -18,7 +18,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background-color: #18191b;
+      background-color: #161719;
       font-family: 'Shippori Mincho', serif;
       user-select: none;
     }
@@ -37,15 +37,15 @@
     }
 
     #bg-default {
-      background-color: #202225;
+      background-color: #1E2023;
       background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px);
-      background-size: 44px 44px;
+      background-size: 48px 48px;
       opacity: 1;
     }
 
     .shop-bg {
       opacity: 0;
-      transform: scale(1.05);
+      transform: scale(1.06);
       filter: brightness(0.72);
     }
 
@@ -55,14 +55,14 @@
     }
 
     /* =========================================
-       左上のタイトルロゴ
+       左上のタイトル ＆ 現在のモード表示
     ========================================= */
     .site-title {
       position: fixed;
       top: 28px;
       left: 32px;
       z-index: 100;
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.92);
       font-size: 20px;
       letter-spacing: 0.14em;
       pointer-events: none;
@@ -74,29 +74,43 @@
       top: 62px;
       left: 32px;
       z-index: 100;
-      color: rgba(255, 255, 255, 0.55);
+      color: rgba(255, 255, 255, 0.6);
       font-size: 12px;
       letter-spacing: 0.08em;
       pointer-events: none;
       transition: color 0.3s ease;
     }
 
-    .site-status.is-locked {
+    .site-status.is-reading {
       color: #E2A83E;
     }
 
+    /* 画面中央の静かな目印（ここにカーソルを置くと静止します） */
+    .center-reticle {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      width: 24px;
+      height: 24px;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 90;
+    }
+
     /* =========================================
-       右下ミニマップ（広大な空間の現在地レーダー）
+       右下ミニマップ（6000×4500 空間の現在地レーダー）
     ========================================= */
     .minimap {
       position: fixed;
       bottom: 24px;
       right: 28px;
-      width: 160px;
-      height: 120px;
-      background: rgba(20, 22, 25, 0.72);
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: 168px;
+      height: 126px;
+      background: rgba(18, 20, 23, 0.78);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 8px;
       z-index: 100;
       pointer-events: none;
@@ -105,8 +119,8 @@
 
     .minimap-view {
       position: absolute;
-      border: 1px solid rgba(226, 168, 62, 0.8);
-      background: rgba(226, 168, 62, 0.15);
+      border: 1px solid rgba(226, 168, 62, 0.85);
+      background: rgba(226, 168, 62, 0.16);
     }
 
     .minimap-dot {
@@ -119,12 +133,12 @@
     }
 
     /* =========================================
-       広大な回遊空間（4800px × 3600px）
+       超広大な回遊空間（6000px × 4500px）
     ========================================= */
     #world {
       position: fixed;
-      width: 4800px;
-      height: 3600px;
+      width: 6000px;
+      height: 4500px;
       left: 0;
       top: 0;
       z-index: 10;
@@ -132,7 +146,7 @@
     }
 
     /* =========================================
-       店舗グループ
+       店舗グループ ＆ 数珠繋ぎトピック展開
     ========================================= */
     .shop-spot {
       position: absolute;
@@ -140,20 +154,20 @@
       height: 0;
     }
 
-    /* 展開後にトピック全体を包み込む透明の維持エリア（これがあることでトピックを見に行っても閉じない） */
-    .hover-keep-zone {
+    /* 展開中のトピック群全体を包み込み、移動しても絶対に消えないようにする透明バリア */
+    .juzu-safe-zone {
       position: absolute;
       left: 0;
       top: 0;
-      width: 980px;
-      height: 760px;
+      width: 1350px;
+      height: 920px;
       transform: translate(-50%, -50%);
       border-radius: 50%;
       pointer-events: none;
       z-index: 5;
     }
 
-    .shop-spot.is-hovered .hover-keep-zone {
+    .shop-spot.is-active-shop .juzu-safe-zone {
       pointer-events: auto;
     }
 
@@ -166,46 +180,48 @@
       width: 300px;
       height: auto;
       cursor: pointer;
-      z-index: 20;
-      filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.5));
-      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), filter 0.55s ease;
+      z-index: 25;
+      filter: drop-shadow(0 18px 36px rgba(0, 0, 0, 0.55));
+      transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), filter 0.5s ease;
     }
 
-    .shop-spot.is-hovered .main-sign-img {
+    .shop-spot.is-active-shop .main-sign-img {
       transform: translate(-50%, -50%) scale(1.04);
-      filter: drop-shadow(0 26px 50px rgba(0, 0, 0, 0.65));
+      filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.7));
     }
 
-    /* =========================================
-       生徒制作の図鑑トピック画像（時間差で連続ポップアップ）
-    ========================================= */
+    /* 生徒制作の図鑑トピック画像（数珠繋ぎで1つずつ出現） */
     .topic-img {
       position: absolute;
       left: 0;
       top: 0;
-      width: 265px;
+      width: 275px;
       height: auto;
       pointer-events: none;
-      z-index: 15;
+      z-index: 20;
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.75);
-      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.45));
+      cursor: pointer;
+      /* 出現前は一つ前の位置付近から控えめに待機 */
+      transform: translate(calc(-50% + var(--from-x)), calc(-50% + var(--from-y))) scale(0.75);
+      filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.5));
       transition:
-        transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.45s ease;
+        transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.45s ease,
+        filter 0.3s ease;
     }
 
-    .shop-spot.is-hovered .topic-img {
+    /* 数珠繋ぎで解放された（is-unlocked）トピックだけが表示される */
+    .topic-img.is-unlocked {
       opacity: 1;
       pointer-events: auto;
       transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1);
     }
 
-    /* 個別のトピック画像にカーソルを合わせるとさらに大きく拡大してじっくり読める */
-    .shop-spot.is-hovered .topic-img:hover {
-      transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.18);
-      z-index: 35;
-      filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.75));
+    /* そのトピックにカーソルを合わせてじっくり読んでいるとき（大きく拡大＆最前面へ） */
+    .topic-img.is-unlocked:hover {
+      transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.22);
+      z-index: 40;
+      filter: drop-shadow(0 26px 52px rgba(0, 0, 0, 0.85));
     }
   </style>
 </head>
@@ -215,14 +231,15 @@
   <div id="bg-container"></div>
 
   <h1 class="site-title">薩摩川内市 看板デザイン図鑑</h1>
-  <div class="site-status" id="status-text">画面の端にカーソルを寄せるとゆっくり回遊します</div>
+  <div class="site-status" id="status-text">中心からカーソルを離すと回遊します（離れるほど加速）</div>
+  <div class="center-reticle"></div>
 
   <!-- 右下ミニマップ -->
   <div class="minimap" id="minimap">
     <div class="minimap-view" id="minimap-view"></div>
   </div>
 
-  <!-- 4800x3600 の広大な空間 -->
+  <!-- 6000x4500 の超広大な回遊空間 -->
   <div id="world"></div>
 
   <script>
@@ -237,22 +254,22 @@
         <rect x="34" y="34" width="532" height="292" rx="18" fill="none" stroke="${accentColor}" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.6"/>
         <text x="300" y="135" fill="${accentColor}" font-family="serif" font-size="22" letter-spacing="6" text-anchor="middle">${subtitle}</text>
         <text x="300" y="205" fill="#F7F5F0" font-family="serif" font-weight="bold" font-size="44" letter-spacing="4" text-anchor="middle">${title}</text>
-        <text x="300" y="275" fill="#F7F5F0" opacity="0.55" font-family="sans-serif" font-size="16" text-anchor="middle">カーソルを合わせると図鑑が開きます</text>
+        <text x="300" y="275" fill="#F7F5F0" opacity="0.6" font-family="sans-serif" font-size="16" text-anchor="middle">触れると最初のトピックが開きます</text>
       </svg>`;
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     }
 
-    function createDummyTopic(num, heading, subtext, badgeColor) {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="340" viewBox="0 0 520 340">
-        <rect x="8" y="8" width="504" height="324" rx="20" fill="#F7F5F0" stroke="#222" stroke-width="3"/>
-        <rect x="28" y="28" width="96" height="32" rx="16" fill="${badgeColor}"/>
-        <text x="76" y="49" fill="#FFF" font-family="sans-serif" font-weight="bold" font-size="15" text-anchor="middle">TOPIC ${num}</text>
+    function createDummyTopic(num, heading, subtext, nextHint, badgeColor) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="540" height="350" viewBox="0 0 540 350">
+        <rect x="8" y="8" width="524" height="334" rx="20" fill="#F7F5F0" stroke="#222" stroke-width="3"/>
+        <rect x="28" y="28" width="104" height="32" rx="16" fill="${badgeColor}"/>
+        <text x="80" y="49" fill="#FFF" font-family="sans-serif" font-weight="bold" font-size="15" text-anchor="middle">TOPIC ${num}</text>
         <text x="28" y="102" fill="#1E1E1E" font-family="serif" font-weight="bold" font-size="28">${heading}</text>
-        <line x1="28" y1="122" x2="492" y2="122" stroke="#1E1E1E" stroke-width="2" opacity="0.2"/>
-        <rect x="28" y="142" width="464" height="120" rx="12" fill="#EAE6DC"/>
-        <text x="260" y="198" fill="#555" font-family="sans-serif" font-size="17" text-anchor="middle">${subtext}</text>
-        <text x="260" y="226" fill="#888" font-family="sans-serif" font-size="13" text-anchor="middle">（カーソルを乗せるとさらに拡大して読めます）</text>
-        <text x="488" y="308" fill="#888" font-family="sans-serif" font-size="13" text-anchor="end">SATSUMASENDAI ARCHIVE</text>
+        <line x1="28" y1="122" x2="512" y2="122" stroke="#1E1E1E" stroke-width="2" opacity="0.2"/>
+        <rect x="28" y="142" width="484" height="122" rx="12" fill="#EAE6DC"/>
+        <text x="270" y="198" fill="#444" font-family="sans-serif" font-size="17" text-anchor="middle">${subtext}</text>
+        <text x="270" y="226" fill="#777" font-family="sans-serif" font-size="13" text-anchor="middle">（カーソルを乗せると拡大してじっくり読めます）</text>
+        <text x="508" y="312" fill="${badgeColor}" font-family="sans-serif" font-weight="bold" font-size="14" text-anchor="end">${nextHint}</text>
       </svg>`;
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     }
@@ -274,91 +291,93 @@
 
     /**
      * =========================================================================
-     * 【店舗データ】広い空間（4800 × 3600）の中にゆったり配置
+     * 【店舗データ】6000 × 4500 の広大な空間にゆったり配置
+     * トピックは数珠繋ぎ（01 → 02 → 03 → 04）で順番に出現するよう並べています
      * =========================================================================
      */
     const shops = [
       {
         id: "ensemble",
-        // 空間の中央付近（2400, 1800）
-        x: 2400,
-        y: 1800,
+        // 空間のほぼ中央（3000, 2250）
+        x: 3000,
+        y: 2250,
         signImage: createDummySign("Ensemble", "DRINK × CAFE", "#2F3A40", "#E2A83E"),
         bgImage: createDummyBg("#4A3B32", "#1D1815", "BACKGROUND : ENSEMBLE CAFE ATMOSPHERE"),
+        // 看板から右回り・数珠繋ぎに連なる配置
         topics: [
           {
-            image: createDummyTopic("01", "全体のまとまりの良さ", "文字の流れと全体のシルエット分析図", "#C83E2B"),
+            image: createDummyTopic("01", "全体のまとまりの良さ", "文字の流れと全体のシルエット分析図", "触れると次のトピック02へ →", "#C83E2B"),
             offsetX: -340,
-            offsetY: -200,
-            width: 265
+            offsetY: -180,
+            width: 275
           },
           {
-            image: createDummyTopic("02", "おさまりが生む愛おしさ", "曲線ラインと文字の止めの調和図解", "#D98A2B"),
+            image: createDummyTopic("02", "おさまりが生む愛おしさ", "曲線ラインと文字の止めの調和図解", "触れると次のトピック03へ →", "#D98A2B"),
             offsetX: 340,
-            offsetY: -190,
-            width: 265
+            offsetY: -180,
+            width: 275
           },
           {
-            image: createDummyTopic("03", "かすかな安定感", "微妙に異なる文字間隔と密度の比較図", "#2E6F73"),
-            offsetX: -330,
-            offsetY: 210,
-            width: 265
+            image: createDummyTopic("03", "かすかな安定感", "微妙に異なる文字間隔と密度の比較図", "触れると最後のトピック04へ →", "#2E6F73"),
+            offsetX: 340,
+            offsetY: 200,
+            width: 275
           },
           {
-            image: createDummyTopic("04", "入れ替えてみました（Ee / be）", "文字パーツ入れ替え検証シミュレーション", "#5D4E7B"),
-            offsetX: 330,
-            offsetY: 220,
-            width: 265
+            image: createDummyTopic("04", "入れ替えてみました（Ee / be）", "文字パーツ入れ替え検証シミュレーション", "★ すべてのトピックを展開しました", "#5D4E7B"),
+            offsetX: -340,
+            offsetY: 200,
+            width: 275
           }
         ]
       },
       {
         id: "sample-shop-2",
-        // 右上のエリアへゆったり離して配置
-        x: 3450,
-        y: 1250,
+        // 右上エリアへ大きく離して配置
+        x: 4350,
+        y: 1450,
         signImage: createDummySign("川内 昔ながらの和菓子舗", "TRADITIONAL SWEETS", "#4A2525", "#E8C574"),
         bgImage: createDummyBg("#522A28", "#1F1212", "BACKGROUND : RETRO SHOP STREET"),
         topics: [
           {
-            image: createDummyTopic("01", "手書き毛筆の力強さ", "筆の入りと抜きのリズム分析", "#C83E2B"),
+            image: createDummyTopic("01", "手書き毛筆の力強さ", "筆の入りと抜きのリズム分析", "触れるとトピック02へ →", "#C83E2B"),
             offsetX: -330,
-            offsetY: -190,
-            width: 260
+            offsetY: -170,
+            width: 270
           },
           {
-            image: createDummyTopic("02", "経年変化と木の質感", "看板の素材と色味のコントラスト", "#D98A2B"),
+            image: createDummyTopic("02", "経年変化と木の質感", "看板の素材と色味のコントラスト", "触れるとトピック03へ →", "#D98A2B"),
             offsetX: 330,
-            offsetY: -180,
-            width: 260
+            offsetY: -170,
+            width: 270
           },
           {
-            image: createDummyTopic("03", "縦書きの余白バランス", "視線を誘導する文字配置の工夫", "#2E6F73"),
-            offsetX: 320,
-            offsetY: 200,
-            width: 260
+            image: createDummyTopic("03", "縦書きの余白バランス", "視線を誘導する文字配置の工夫", "★ すべてのトピックを展開しました", "#2E6F73"),
+            offsetX: 330,
+            offsetY: 190,
+            width: 270
           }
         ]
       },
       {
         id: "sample-shop-3",
-        // 左下のエリアへゆったり離して配置
-        x: 1350,
-        y: 2350,
+        // 左下エリアへ大きく離して配置
+        x: 1650,
+        y: 3050,
         signImage: createDummySign("せんだい 喫茶ロマン", "COFFEE & ROASTERY", "#263B36", "#9FD3C7"),
         bgImage: createDummyBg("#243B35", "#121D1A", "BACKGROUND : KISSATEN ROMAN"),
         topics: [
           {
-            image: createDummyTopic("01", "昭和レトロな丸ゴシック", "角の丸みが生む親しみやすさ", "#C83E2B"),
-            offsetX: -320,
-            offsetY: -180,
-            width: 260
+            image: createDummyTopic("01", "昭和レトロな丸ゴシック", "角の丸みが生む親しみやすさ", "触れるとトピック02へ →", "#C83E2B"),
+            offsetX: -330,
+            offsetY: -170,
+            width: 270
           },
           {
-            image: createDummyTopic("02", "補色を使った配色設計", "深い緑とクリーム色のコントラスト", "#D98A2B"),
-            offsetX: 320,
-            offsetY: 190,
-            width: 260
+            image: createDummyTopic("02", "補色を使った配色設計", "深い緑とクリーム色のコントラスト", "★ すべてのトピックを展開しました", "#D98A2B"),
+            offsetX: 330,
+            offsetY: 180,
+            width: 270
           }
         ]
       }
@@ -366,7 +385,7 @@
 
     /**
      * =========================================================================
-     * 画面生成と「じっくり閲覧できる」インタラクション制御
+     * 画面生成 ＆ 「数珠繋ぎ展開」制御
      * =========================================================================
      */
     const world = document.getElementById('world');
@@ -375,9 +394,9 @@
     const minimapView = document.getElementById('minimap-view');
     const statusText = document.getElementById('status-text');
 
-    const WORLD_W = 4800;
-    const WORLD_H = 3600;
-    let activeSpot = null; // 現在図鑑を開いている店舗（開いている間はカメラを自動ロック）
+    const WORLD_W = 6000;
+    const WORLD_H = 4500;
+    let readingSpot = null; // 閲覧中の店舗（閲覧中は空間スクロールを自動停止）
 
     const shopElements = shops.map(shop => {
       // 1. 背景画像レイヤー
@@ -399,54 +418,67 @@
       spot.style.left = `${shop.x}px`;
       spot.style.top = `${shop.y}px`;
 
-      // 展開後にトピック間を移動しても閉じないように守る透明バリア
-      const keepZone = document.createElement('div');
-      keepZone.className = 'hover-keep-zone';
-      spot.appendChild(keepZone);
+      // 閲覧中にトピック間を行き来しても絶対に消えないように守る大きな透明エリア
+      const safeZone = document.createElement('div');
+      safeZone.className = 'juzu-safe-zone';
+      spot.appendChild(safeZone);
 
-      // 3. 生徒制作のトピック画像（時間差で連続ポップアップ）
+      // 3. 数珠繋ぎトピック群を生成
+      const topicNodes = [];
       shop.topics.forEach((topic, index) => {
         const tImg = document.createElement('img');
         tImg.className = 'topic-img';
         tImg.src = topic.image;
         tImg.alt = '';
         if (topic.width) tImg.style.width = `${topic.width}px`;
+
+        // 出現元の座標（0番目は看板中心から、1番目以降は「1つ前のトピックの位置」から数珠繋ぎで伸びる！）
+        const prevTopic = index > 0 ? shop.topics[index - 1] : { offsetX: 0, offsetY: 0 };
+        tImg.style.setProperty('--from-x', `${prevTopic.offsetX}px`);
+        tImg.style.setProperty('--from-y', `${prevTopic.offsetY}px`);
         tImg.style.setProperty('--tx', `${topic.offsetX}px`);
         tImg.style.setProperty('--ty', `${topic.offsetY}px`);
-        tImg.dataset.delay = `${index * 0.14}s`;
+
+        // ★ 数珠繋ぎトリガー：このトピックにカーソルを合わせて閲覧すると、次のトピックが解放される！
+        tImg.addEventListener('mouseenter', () => {
+          if (index + 1 < topicNodes.length) {
+            topicNodes[index + 1].classList.add('is-unlocked');
+          }
+        });
+
         spot.appendChild(tImg);
+        topicNodes.push(tImg);
       });
 
-      // 4. 店舗看板画像（メイン）
+      // 4. メインの店舗看板画像
       const signImg = document.createElement('img');
       signImg.className = 'main-sign-img';
       signImg.src = shop.signImage;
       signImg.alt = '';
       spot.appendChild(signImg);
 
-      // 看板に触れたら図鑑を展開し、カメラのスクロールを一時停止してじっくり見られるようにする
+      // 看板に触れたら、まず「最初のトピック（0番目）」を開放し、スクロールを一時停止する
       signImg.addEventListener('mouseenter', () => {
-        spot.classList.add('is-hovered');
-        activeSpot = spot;
-        statusText.textContent = "図鑑を閲覧中（枠の外へカーソルを出すと再び回遊します）";
-        statusText.classList.add('is-locked');
+        spot.classList.add('is-active-shop');
+        readingSpot = spot;
+        statusText.textContent = "図鑑を閲覧中（トピックに触れると数珠繋ぎで次が開きます）";
+        statusText.classList.add('is-reading');
 
-        spot.querySelectorAll('.topic-img').forEach(img => {
-          img.style.transitionDelay = img.dataset.delay;
-        });
+        if (topicNodes.length > 0) {
+          topicNodes[0].classList.add('is-unlocked');
+        }
       });
 
-      // 店舗全体の大きなバリア（keepZone）から外に出たときだけ閉じる
+      // 店舗の大きな安全エリア（safeZone）から完全に外へ出たときだけリセットして回遊に戻る
       spot.addEventListener('mouseleave', () => {
-        spot.classList.remove('is-hovered');
-        if (activeSpot === spot) {
-          activeSpot = null;
-          statusText.textContent = "画面の端にカーソルを寄せるとゆっくり回遊します";
-          statusText.classList.remove('is-locked');
+        spot.classList.remove('is-active-shop');
+        topicNodes.forEach(img => img.classList.remove('is-unlocked'));
+
+        if (readingSpot === spot) {
+          readingSpot = null;
+          statusText.textContent = "中心からカーソルを離すと回遊します（離れるほど加速）";
+          statusText.classList.remove('is-reading');
         }
-        spot.querySelectorAll('.topic-img').forEach(img => {
-          img.style.transitionDelay = '0s';
-        });
       });
 
       world.appendChild(spot);
@@ -455,13 +487,13 @@
 
     /**
      * =========================================================================
-     * 画面端ゾーン方式のゆっくり回遊スクロール
-     * （中央70%では動かず、上下左右の端15%にカーソルを置いたときだけゆっくり進む）
+     * 中心基準・距離比例の滑らかな回遊スクロール
+     * （中心では静止し、中心から離れるほど少しずつ速度が上がる）
      * =========================================================================
      */
-    // 初期位置は中央の「Ensemble（2400, 1800）」が画面真ん中に来る位置
-    let currentX = window.innerWidth / 2 - 2400;
-    let currentY = window.innerHeight / 2 - 1800;
+    // 初期位置：中央の「Ensemble（3000, 2250）」が画面ど真ん中に来る位置
+    let currentX = window.innerWidth / 2 - 3000;
+    let currentY = window.innerHeight / 2 - 2250;
 
     let pointerClientX = window.innerWidth / 2;
     let pointerClientY = window.innerHeight / 2;
@@ -477,33 +509,36 @@
       const winW = window.innerWidth;
       const winH = window.innerHeight;
 
-      // 図鑑を開いて閲覧中（activeSpot !== null）は、画面が逃げないようにスクロールを一時停止！
-      if (hasMovedMouse && !activeSpot) {
-        // 画面上のカーソル位置を -1.0 〜 +1.0 に変換（中央が 0）
-        const normX = (pointerClientX / winW - 0.5) * 2;
-        const normY = (pointerClientY / winH - 0.5) * 2;
+      // 図鑑を閲覧中（readingSpot !== null）は、画面が動いて逃げないようにピタッと静止！
+      if (hasMovedMouse && !readingSpot) {
+        // 画面中心からのズレ（-1.0 〜 +1.0）
+        const dxRatio = (pointerClientX - winW / 2) / (winW / 2);
+        const dyRatio = (pointerClientY - winH / 2) / (winH / 2);
 
-        // 中央70%（-0.7 〜 +0.7）は「静止ゾーン（デッドゾーン）」
-        const DEAD_ZONE = 0.68;
-        const MAX_SPEED = 5.5; // 最高速度をかなりゆっくりに設定（数値が小さいほど遅い）
+        // 中心付近（16%以内）は完全に静止（遊びゾーン）
+        const CENTER_DEAD_ZONE = 0.16;
+        // 画面の端いっぱいまで寄せたときの最高速度（ゆっくり回遊できる絶妙な速度）
+        const MAX_SPEED = 6.5;
 
         let vx = 0;
         let vy = 0;
 
-        if (Math.abs(normX) > DEAD_ZONE) {
-          const ratioX = (Math.abs(normX) - DEAD_ZONE) / (1 - DEAD_ZONE);
-          vx = -Math.sign(normX) * Math.pow(ratioX, 1.5) * MAX_SPEED;
+        if (Math.abs(dxRatio) > CENTER_DEAD_ZONE) {
+          // 中心から離れるほど 0 → 1 に増える割合
+          const normalized = (Math.abs(dxRatio) - CENTER_DEAD_ZONE) / (1 - CENTER_DEAD_ZONE);
+          // 2乗カーブにすることで「少し離れるとごくゆっくり、遠くへ行くほど徐々に加速」を実現
+          vx = -Math.sign(dxRatio) * Math.pow(normalized, 2.0) * MAX_SPEED;
         }
 
-        if (Math.abs(normY) > DEAD_ZONE) {
-          const ratioY = (Math.abs(normY) - DEAD_ZONE) / (1 - DEAD_ZONE);
-          vy = -Math.sign(normY) * Math.pow(ratioY, 1.5) * MAX_SPEED;
+        if (Math.abs(dyRatio) > CENTER_DEAD_ZONE) {
+          const normalized = (Math.abs(dyRatio) - CENTER_DEAD_ZONE) / (1 - CENTER_DEAD_ZONE);
+          vy = -Math.sign(dyRatio) * Math.pow(normalized, 2.0) * MAX_SPEED;
         }
 
         currentX += vx;
         currentY += vy;
 
-        // 広い空間の外へ行き過ぎないように制限
+        // 6000×4500 空間の端で止める
         const minX = Math.min(0, winW - WORLD_W);
         const minY = Math.min(0, winH - WORLD_H);
         currentX = Math.max(minX, Math.min(0, currentX));
@@ -518,8 +553,8 @@
       minimapView.style.width = `${(winW / WORLD_W) * 100}%`;
       minimapView.style.height = `${(winH / WORLD_H) * 100}%`;
 
-      // 店舗への接近判定（560px以内に近づくと背景がふんわり切り替わる）
-      const APPROACH_RADIUS = 560;
+      // 店舗への接近判定（620px以内に近づくと背景がふんわり切り替わる）
+      const APPROACH_RADIUS = 620;
       let closestItem = null;
       let minDistance = Infinity;
 
@@ -535,7 +570,7 @@
       });
 
       shopElements.forEach(item => {
-        if (item === closestItem || item.spot === activeSpot) {
+        if (item === closestItem || item.spot === readingSpot) {
           item.bgDiv.classList.add('is-active');
         } else {
           item.bgDiv.classList.remove('is-active');
