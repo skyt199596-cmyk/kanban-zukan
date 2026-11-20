@@ -85,7 +85,7 @@
       color: #E2A83E;
     }
 
-    /* 画面中央の静かな目印（ここにカーソルを置くと静止します） */
+    /* 画面中央の静かな目印 */
     .center-reticle {
       position: fixed;
       left: 50%;
@@ -201,7 +201,6 @@
       z-index: 20;
       opacity: 0;
       cursor: pointer;
-      /* 出現前は一つ前の位置付近から控えめに待機 */
       transform: translate(calc(-50% + var(--from-x)), calc(-50% + var(--from-y))) scale(0.75);
       filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.5));
       transition:
@@ -210,14 +209,12 @@
         filter 0.3s ease;
     }
 
-    /* 数珠繋ぎで解放された（is-unlocked）トピックだけが表示される */
     .topic-img.is-unlocked {
       opacity: 1;
       pointer-events: auto;
       transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1);
     }
 
-    /* そのトピックにカーソルを合わせてじっくり読んでいるとき（大きく拡大＆最前面へ） */
     .topic-img.is-unlocked:hover {
       transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1.22);
       z-index: 40;
@@ -234,12 +231,10 @@
   <div class="site-status" id="status-text">中心からカーソルを離すと回遊します（離れるほど加速）</div>
   <div class="center-reticle"></div>
 
-  <!-- 右下ミニマップ -->
   <div class="minimap" id="minimap">
     <div class="minimap-view" id="minimap-view"></div>
   </div>
 
-  <!-- 6000x4500 の超広大な回遊空間 -->
   <div id="world"></div>
 
   <script>
@@ -254,7 +249,7 @@
         <rect x="34" y="34" width="532" height="292" rx="18" fill="none" stroke="${accentColor}" stroke-width="1.5" stroke-dasharray="8 6" opacity="0.6"/>
         <text x="300" y="135" fill="${accentColor}" font-family="serif" font-size="22" letter-spacing="6" text-anchor="middle">${subtitle}</text>
         <text x="300" y="205" fill="#F7F5F0" font-family="serif" font-weight="bold" font-size="44" letter-spacing="4" text-anchor="middle">${title}</text>
-        <text x="300" y="275" fill="#F7F5F0" opacity="0.6" font-family="sans-serif" font-size="16" text-anchor="middle">触れると最初のトピックが開きます</text>
+        <text x="300" y="275" fill="#F7F5F0" opacity="0.6" font-family="sans-serif" font-size="16" text-anchor="middle">触れると画面中央へ移動し図鑑が開きます</text>
       </svg>`;
       return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     }
@@ -291,19 +286,16 @@
 
     /**
      * =========================================================================
-     * 【店舗データ】6000 × 4500 の広大な空間にゆったり配置
-     * トピックは数珠繋ぎ（01 → 02 → 03 → 04）で順番に出現するよう並べています
+     * 【店舗データ】
      * =========================================================================
      */
     const shops = [
       {
         id: "ensemble",
-        // 空間のほぼ中央（3000, 2250）
         x: 3000,
         y: 2250,
         signImage: createDummySign("Ensemble", "DRINK × CAFE", "#2F3A40", "#E2A83E"),
         bgImage: createDummyBg("#4A3B32", "#1D1815", "BACKGROUND : ENSEMBLE CAFE ATMOSPHERE"),
-        // 看板から右回り・数珠繋ぎに連なる配置
         topics: [
           {
             image: createDummyTopic("01", "全体のまとまりの良さ", "文字の流れと全体のシルエット分析図", "触れると次のトピック02へ →", "#C83E2B"),
@@ -333,7 +325,6 @@
       },
       {
         id: "sample-shop-2",
-        // 右上エリアへ大きく離して配置
         x: 4350,
         y: 1450,
         signImage: createDummySign("川内 昔ながらの和菓子舗", "TRADITIONAL SWEETS", "#4A2525", "#E8C574"),
@@ -361,7 +352,6 @@
       },
       {
         id: "sample-shop-3",
-        // 左下エリアへ大きく離して配置
         x: 1650,
         y: 3050,
         signImage: createDummySign("せんだい 喫茶ロマン", "COFFEE & ROASTERY", "#263B36", "#9FD3C7"),
@@ -385,7 +375,7 @@
 
     /**
      * =========================================================================
-     * 画面生成 ＆ 「数珠繋ぎ展開」制御
+     * 画面生成 ＆ 「中央オートセンタリング ＋ 数珠繋ぎ展開」制御
      * =========================================================================
      */
     const world = document.getElementById('world');
@@ -396,7 +386,9 @@
 
     const WORLD_W = 6000;
     const WORLD_H = 4500;
-    let readingSpot = null; // 閲覧中の店舗（閲覧中は空間スクロールを自動停止）
+    let readingItem = null; // 閲覧中の店舗オブジェクト（{ shop, spot, bgDiv }）
+    let isCenteringTransition = false; // 中央へスライド移動中の誤判定防止フラグ
+    let centeringTimer = null;
 
     const shopElements = shops.map(shop => {
       // 1. 背景画像レイヤー
@@ -432,14 +424,13 @@
         tImg.alt = '';
         if (topic.width) tImg.style.width = `${topic.width}px`;
 
-        // 出現元の座標（0番目は看板中心から、1番目以降は「1つ前のトピックの位置」から数珠繋ぎで伸びる！）
         const prevTopic = index > 0 ? shop.topics[index - 1] : { offsetX: 0, offsetY: 0 };
         tImg.style.setProperty('--from-x', `${prevTopic.offsetX}px`);
         tImg.style.setProperty('--from-y', `${prevTopic.offsetY}px`);
         tImg.style.setProperty('--tx', `${topic.offsetX}px`);
         tImg.style.setProperty('--ty', `${topic.offsetY}px`);
 
-        // ★ 数珠繋ぎトリガー：このトピックにカーソルを合わせて閲覧すると、次のトピックが解放される！
+        // 数珠繋ぎトリガー：このトピックにカーソルを合わせて閲覧すると、次のトピックが解放される
         tImg.addEventListener('mouseenter', () => {
           if (index + 1 < topicNodes.length) {
             topicNodes[index + 1].classList.add('is-unlocked');
@@ -457,41 +448,51 @@
       signImg.alt = '';
       spot.appendChild(signImg);
 
-      // 看板に触れたら、まず「最初のトピック（0番目）」を開放し、スクロールを一時停止する
+      const itemObj = { shop, spot, bgDiv };
+
+      // ★ 看板に触れたら、その店舗を「画面の中央（特等席）」へ滑らかにスライド移動させつつ図鑑を開く！
       signImg.addEventListener('mouseenter', () => {
         spot.classList.add('is-active-shop');
-        readingSpot = spot;
-        statusText.textContent = "図鑑を閲覧中（トピックに触れると数珠繋ぎで次が開きます）";
+        readingItem = itemObj;
+        statusText.textContent = "図鑑を閲覧中（画面中央でじっくり閲覧できます・枠外に出ると回遊再開）";
         statusText.classList.add('is-reading');
+
+        // 中央へスライド移動する最初の0.65秒間は、移動によるカーソル外れで閉じないように保護
+        isCenteringTransition = true;
+        clearTimeout(centeringTimer);
+        centeringTimer = setTimeout(() => {
+          isCenteringTransition = false;
+        }, 650);
 
         if (topicNodes.length > 0) {
           topicNodes[0].classList.add('is-unlocked');
         }
       });
 
-      // 店舗の大きな安全エリア（safeZone）から完全に外へ出たときだけリセットして回遊に戻る
+      // 店舗の大きな安全エリア（safeZone）から完全に外へ出たときだけ閉じる
       spot.addEventListener('mouseleave', () => {
+        // 中央へスライド移動している最中の自動離脱は無視する
+        if (isCenteringTransition) return;
+
         spot.classList.remove('is-active-shop');
         topicNodes.forEach(img => img.classList.remove('is-unlocked'));
 
-        if (readingSpot === spot) {
-          readingSpot = null;
+        if (readingItem === itemObj) {
+          readingItem = null;
           statusText.textContent = "中心からカーソルを離すと回遊します（離れるほど加速）";
           statusText.classList.remove('is-reading');
         }
       });
 
       world.appendChild(spot);
-      return { shop, spot, bgDiv };
+      return itemObj;
     });
 
     /**
      * =========================================================================
-     * 中心基準・距離比例の滑らかな回遊スクロール
-     * （中心では静止し、中心から離れるほど少しずつ速度が上がる）
+     * 中心基準・距離比例の滑らかな回遊スクロール ＋ 特等席オートセンタリング
      * =========================================================================
      */
-    // 初期位置：中央の「Ensemble（3000, 2250）」が画面ど真ん中に来る位置
     let currentX = window.innerWidth / 2 - 3000;
     let currentY = window.innerHeight / 2 - 2250;
 
@@ -508,25 +509,29 @@
     function animate() {
       const winW = window.innerWidth;
       const winH = window.innerHeight;
+      const minX = Math.min(0, winW - WORLD_W);
+      const minY = Math.min(0, winH - WORLD_H);
 
-      // 図鑑を閲覧中（readingSpot !== null）は、画面が動いて逃げないようにピタッと静止！
-      if (hasMovedMouse && !readingSpot) {
-        // 画面中心からのズレ（-1.0 〜 +1.0）
+      if (readingItem) {
+        // ★ 閲覧モード中：触れられた店舗が「画面のちょうど真ん中」に来るように滑らかに移動してピタッと止まる！
+        const targetCenterX = Math.max(minX, Math.min(0, winW / 2 - readingItem.shop.x));
+        const targetCenterY = Math.max(minY, Math.min(0, winH / 2 - readingItem.shop.y));
+
+        currentX += (targetCenterX - currentX) * 0.08;
+        currentY += (targetCenterY - currentY) * 0.08;
+      } else if (hasMovedMouse) {
+        // ★ 回遊モード中：中心からカーソルを離すほどゆっくり〜滑らかに加速
         const dxRatio = (pointerClientX - winW / 2) / (winW / 2);
         const dyRatio = (pointerClientY - winH / 2) / (winH / 2);
 
-        // 中心付近（16%以内）は完全に静止（遊びゾーン）
         const CENTER_DEAD_ZONE = 0.16;
-        // 画面の端いっぱいまで寄せたときの最高速度（ゆっくり回遊できる絶妙な速度）
         const MAX_SPEED = 6.5;
 
         let vx = 0;
         let vy = 0;
 
         if (Math.abs(dxRatio) > CENTER_DEAD_ZONE) {
-          // 中心から離れるほど 0 → 1 に増える割合
           const normalized = (Math.abs(dxRatio) - CENTER_DEAD_ZONE) / (1 - CENTER_DEAD_ZONE);
-          // 2乗カーブにすることで「少し離れるとごくゆっくり、遠くへ行くほど徐々に加速」を実現
           vx = -Math.sign(dxRatio) * Math.pow(normalized, 2.0) * MAX_SPEED;
         }
 
@@ -538,9 +543,6 @@
         currentX += vx;
         currentY += vy;
 
-        // 6000×4500 空間の端で止める
-        const minX = Math.min(0, winW - WORLD_W);
-        const minY = Math.min(0, winH - WORLD_H);
         currentX = Math.max(minX, Math.min(0, currentX));
         currentY = Math.max(minY, Math.min(0, currentY));
       }
@@ -570,7 +572,7 @@
       });
 
       shopElements.forEach(item => {
-        if (item === closestItem || item.spot === readingSpot) {
+        if (item === closestItem || item === readingItem) {
           item.bgDiv.classList.add('is-active');
         } else {
           item.bgDiv.classList.remove('is-active');
